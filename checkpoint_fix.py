@@ -1,3 +1,34 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Checkpoint Prefix Fixer
+======================
+
+This script fixes PyTorch model checkpoints by removing '_orig_mod.' prefixes that are sometimes
+added during model compilation or when using certain PyTorch features like `torch.compile()`.
+
+Purpose:
+--------
+When using PyTorch's compilation features, model state dictionaries may have their keys
+prefixed with '_orig_mod.', making them incompatible with the original model architecture.
+This script cleanly removes these prefixes while preserving the model weights.
+
+Usage:
+------
+1. Set INPUT_CHECKPOINT to your source checkpoint path
+2. Set OUTPUT_CHECKPOINT to your desired output path
+3. Run the script: python checkpoint_fix.py
+
+The script handles both:
+- Raw state dictionaries
+- Full checkpoints containing 'model_state_dict' and other metadata
+
+Example:
+--------
+Input state_dict key:  '_orig_mod.bert.embeddings.word_embeddings.weight'
+Output state_dict key: 'bert.embeddings.word_embeddings.weight'
+
+"""
 import torch
 
 INPUT_CHECKPOINT = "best_deberta_v3_weights.pt"       # The compiled checkpoint with _orig_mod. prefix
