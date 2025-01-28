@@ -1,13 +1,79 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Service Ticket Classification Data Preparation
+============================================
+
+This script prepares and processes service ticket data for multi-label classification,
+performing data cleaning, augmentation, and preprocessing for machine learning tasks.
+
+Key Features:
+------------
+- Loads and cleans service ticket data from Excel
+- Handles multiple classification targets (Category, Subcategory, Assignment Group)
+- Performs text cleaning and standardization
+- Merges rare classes into an "Other" category
+- Implements synonym-based text augmentation for minority classes
+- Computes balanced sample weights for training
+- Encodes labels and saves processed data for model training
+
+Data Processing Steps:
+--------------------
+1. Text Cleaning:
+   - Removes emails, URLs, special characters
+   - Standardizes numbers and whitespace
+   - Handles missing values
+
+2. Class Balancing:
+   - Merges rare classes (below MIN_SAMPLES threshold)
+   - Performs synonym-based oversampling for minority classes
+   - Computes sample weights based on class frequencies
+
+3. Feature Engineering:
+   - Combines multiple text fields with separators
+   - Incorporates metadata (Priority, Contact Type, Location, etc.)
+   - Performs label encoding for target variables
+
+Configuration:
+-------------
+Adjust these parameters in the script:
+- EXCEL_FILE: Input Excel file path
+- OUTPUT_PKL: Output pickle file path
+- MIN_SAMPLES_*: Thresholds for rare class merging
+- OVERSAMPLE_* : Parameters for synonym-based augmentation
+
+Output:
+-------
+Saves a dictionary containing:
+- Processed text data
+- Encoded labels for all classification targets
+- Sample weights
+- Label encoders for decoding predictions
+
+Dependencies:
+------------
+- pandas
+- numpy
+- nltk
+- scikit-learn
+- pickle
+
+Usage:
+------
+1. Configure parameters at the top of the script
+2. Ensure input Excel file exists
+3. Run: python eda.py
+
+The script will process the data and save the results to OUTPUT_PKL.
+"""
+import re
+import random
+import pickle
 import pandas as pd
 import numpy as np
-import pickle
-import re
 import nltk
-import random
-from collections import Counter
+from nltk.corpus import wordnet
 from sklearn.preprocessing import LabelEncoder
 
 # Download NLTK resources if not present
@@ -15,7 +81,7 @@ nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 
-from nltk.corpus import wordnet
+
 
 ##############################################################################
 # CONFIGURATION
@@ -37,8 +103,7 @@ SYNONYM_REPLACE_COUNT = 1       # how many words to replace per augmented sample
 # DATA LOADING & CLEANING
 ##############################################################################
 def load_data(file_path: str) -> pd.DataFrame:
-    df = pd.read_excel(file_path)
-    return df
+    return pd.read_excel(file_path)
 
 def basic_clean_text(text):
     if not isinstance(text, str):
@@ -92,8 +157,7 @@ def synonym_replacement(sentence, replace_count=SYNONYM_REPLACE_COUNT):
         return sentence
     for _ in range(replace_count):
         idx = random.randint(0, len(words) - 1)
-        syns = get_synonyms(words[idx])
-        if syns:
+        if syns := get_synonyms(words[idx]):
             words[idx] = random.choice(syns)
     return " ".join(words)
 
